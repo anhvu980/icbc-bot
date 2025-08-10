@@ -41,4 +41,4 @@ jobs:
           node-version: 18
       - run: npm ci
       - run: npx playwright install --with-deps
-      - run: USER_INDEX=${{ matrix.userIndex }} npx playwright test tests/login.spec.ts --workers=1
+      - run: USER_INDEX=${{ matrix.userIndex }} npx playwright test --workers=1
