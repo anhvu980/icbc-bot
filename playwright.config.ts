@@ -1,5 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
+const isCI = !!process.env.CI || !!process.env.GITHUB_ACTIONS;
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -7,7 +9,7 @@ export default defineConfig({
   workers: 4,
   reporter: [['html', { open: 'never' }]],
   use: {
-    headless: false,
+    headless: isCI,
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     baseURL: 'https://onlinebusiness.icbc.com',
