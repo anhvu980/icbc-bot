@@ -15,11 +15,11 @@ jobs:
       - uses: actions/checkout@v4
       - id: count
         run: |
-          total=$(tail -n +2 data/users.csv | wc -l) # skip header row
+          total=$(tail -n +2 data/valid_users.csv | wc -l) # skip header row
           echo "total=$total" >> $GITHUB_OUTPUT
       - id: set-matrix
         run: |
-          total=${{ steps.count.outputs.total }}
+          total=$TOTAL  # Use env var from previous step output
           arr="["
           for ((i=0;i<total;i++)); do
             if [ $i -ne 0 ]; then arr+=", "; fi
@@ -27,6 +27,8 @@ jobs:
           done
           arr+="]"
           echo "user_indices=$arr" >> $GITHUB_OUTPUT
+        env:
+          TOTAL: ${{ steps.count.outputs.total }}
 
   test:
     needs: count-users
