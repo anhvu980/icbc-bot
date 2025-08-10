@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write  # Needed to push to gh-pages
+
 jobs:
   count-users:
     runs-on: ubuntu-latest
@@ -19,7 +22,7 @@ jobs:
           echo "total=$total" >> $GITHUB_OUTPUT
       - id: set-matrix
         run: |
-          total=$TOTAL  # Use env var from previous step output
+          total=$TOTAL
           arr="["
           for ((i=0;i<total;i++)); do
             if [ $i -ne 0 ]; then arr+=", "; fi
@@ -43,4 +46,31 @@ jobs:
           node-version: 18
       - run: npm ci
       - run: npx playwright install --with-deps
-      - run: USER_INDEX=${{ matrix.userIndex }} npx playwright test --workers=1
+      - run: USER_INDEX=${{ matrix.userIndex }} npx playwright test --reporter=html --output=playwright-report
+      - name: Upload report from this shard
+        uses: actions/upload-artifact@v4
+        with:
+          name: report-${{ matrix.userIndex }}
+          path: playwright-report
+
+  deploy-report:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download all reports
+        uses: actions/download-artifact@v4
+        with:
+          path: reports
+
+      - name: Merge Playwright reports
+        run: |
+          npx playwright merge-reports --reporter=html reports/**/playwright-report
+
+      - name: Deploy HTML Report to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: playwright-report
+          publish_branch: main
